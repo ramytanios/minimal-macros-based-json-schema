@@ -1,5 +1,9 @@
-package schema.annotations
+package schema
 
 import scala.annotation.StaticAnnotation
 
-case class Title(text: String) extends StaticAnnotation
+object annotations {
+
+  case class Title(text: String) extends StaticAnnotation
+
+}
