@@ -1,5 +1,3 @@
-import Dependencies._
-
 ThisBuild / scalaVersion := "2.13.12"
 
 lazy val circeVersion = "0.14.6"
@@ -12,19 +10,19 @@ lazy val circeDeps = Seq(
 lazy val XfatalWarnings = (scalacOptions -= "-Xfatal-warnings")
 
 lazy val root =
-  (project in file(".")).aggregate(annotation.jvm, annotation.js, schema, demo)
+  (project in file(".")).aggregate(annotations.jvm, schema, demo)
 
 lazy val annotations = crossProject(JVMPlatform, JSPlatform)
   .in(file("annotations"))
   .settings(
-    name = "schema-lib-annotations",
+    name := "schema-lib-annotations",
     XfatalWarnings
   )
 
 lazy val schema = project
   .in(file("schema"))
   .settings(
-    name = "schema-lib",
+    name := "schema-lib",
     libraryDependencies ++= circeDeps,
     XfatalWarnings
   )
