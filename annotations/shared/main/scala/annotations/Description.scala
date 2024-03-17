@@ -8,8 +8,7 @@ object annotations {
 
   object Description {
 
-    implicit val repr: Repr[Description] =
-      Repr.factory(() => ("description", text))
+    implicit val repr: Repr[Description] = Repr.factory(() => ("description", text))
 
   }
 
