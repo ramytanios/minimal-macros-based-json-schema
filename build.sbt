@@ -9,8 +9,6 @@ lazy val circeDeps = Seq(
   "io.circe" %% "circe-parser" % circeVersion
 )
 
-lazy val XfatalWarnings = ()
-
 lazy val root =
   (project in file(".")).aggregate(annotations.jvm, schema, demo)
 
@@ -26,6 +24,7 @@ lazy val schema = project
   .settings(
     name := "schema-lib",
     libraryDependencies ++= circeDeps,
+    libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value),
     scalacOptions -= "-Xfatal-warnings"
   )
   .dependsOn(annotations.jvm)

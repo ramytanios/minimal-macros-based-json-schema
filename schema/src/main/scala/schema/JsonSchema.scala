@@ -1,10 +1,11 @@
-package example
+package schema
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
+
 import io.circe.Json
 
-object Macro {
+object JsonSchema {
 
   def schema[T]: Json = macro schemaMacro[T]
 

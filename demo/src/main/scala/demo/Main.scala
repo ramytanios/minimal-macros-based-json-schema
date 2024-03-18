@@ -1,13 +1,12 @@
-package example
+package schema.demo
 
-import scala.annotation.StaticAnnotation
+import schema.annotations._
+import schema.JsonSchema
+
 object Info extends App {
 
-  // annotations
-  case class Title(t: String) extends StaticAnnotation
-  case class Description(t: String) extends StaticAnnotation
-
   sealed trait Position
+
   object Position {
     case object Junior extends Position
     case object Senior extends Position
@@ -21,6 +20,6 @@ object Info extends App {
   )
 
   
-  println(Macro.schema[Employee])
+  println(JsonSchema.schema[Employee])
 
 }

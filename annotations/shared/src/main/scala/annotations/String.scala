@@ -7,7 +7,8 @@ package annotations {
   case class Regex(regex: String) extends StaticAnnotation
 
   object Regex {
-    implicit val repr: Repr[Regex] = Repr.factory((a: Regex) => ("pattern", a.regex.toString))
+    implicit val repr: Repr[Regex] =
+      Repr.factory((a: Regex) => ("pattern", a.regex.toString))
   }
 
   case class MinLength(lb: Long) extends StaticAnnotation
