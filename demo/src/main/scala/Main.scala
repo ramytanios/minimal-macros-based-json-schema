@@ -1,6 +1,7 @@
 package schema.demo
 
 import schema.annotations._
+import schema.JsonSchema
 
 object Main extends App {
 

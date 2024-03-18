@@ -1,3 +1,5 @@
+package schema 
+
 import io.circe.Json
 import scala.reflect.macros.blackbox
 

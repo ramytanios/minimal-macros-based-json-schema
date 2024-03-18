@@ -1,4 +1,4 @@
-package schema
+package schema.annotations
 
 trait Repr[A] {
   def repr(a: A): List[(String, String)]
