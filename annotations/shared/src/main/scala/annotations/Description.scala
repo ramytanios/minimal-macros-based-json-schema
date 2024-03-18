@@ -2,12 +2,13 @@ package schema
 
 import scala.annotation.StaticAnnotation
 
-object annotations {
+package annotations {
 
   case class Description(text: String) extends StaticAnnotation
 
   object Description {
-    implicit val repr: Repr[Description] = Repr.factory(d => List(("description", d.text)))
+    implicit val repr: Repr[Description] =
+      Repr.factory((a: Description) => ("description", a.text))
   }
 
 }

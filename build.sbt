@@ -1,5 +1,7 @@
 ThisBuild / scalaVersion := "2.13.12"
 
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
+
 lazy val circeVersion = "0.14.6"
 lazy val circeDeps = Seq(
   "io.circe" %% "circe-generic" % circeVersion,
