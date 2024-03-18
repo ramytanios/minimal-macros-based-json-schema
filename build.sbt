@@ -3,11 +3,6 @@ ThisBuild / scalaVersion := "2.13.12"
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 
 lazy val circeVersion = "0.14.6"
-lazy val circeDeps = Seq(
-  "io.circe" %% "circe-generic" % circeVersion,
-  "io.circe" %% "circe-literal" % circeVersion,
-  "io.circe" %% "circe-parser" % circeVersion
-)
 
 lazy val root =
   (project in file(".")).aggregate(annotations.jvm, schema, demo)
@@ -23,8 +18,13 @@ lazy val schema = project
   .in(file("schema"))
   .settings(
     name := "schema-lib",
-    libraryDependencies ++= circeDeps,
-    libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value),
+    libraryDependencies ++=
+      Seq(
+        "io.circe" %% "circe-generic" % circeVersion,
+        "io.circe" %% "circe-literal" % circeVersion,
+        "io.circe" %% "circe-parser" % circeVersion,
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value
+      ),
     scalacOptions -= "-Xfatal-warnings"
   )
   .dependsOn(annotations.jvm)

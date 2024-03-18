@@ -1,9 +1,8 @@
 package schema.demo
 
 import schema.annotations._
-import schema.JsonSchema
 
-object Info extends App {
+object Main extends App {
 
   sealed trait Position
 

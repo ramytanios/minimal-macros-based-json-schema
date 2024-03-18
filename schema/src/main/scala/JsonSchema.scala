@@ -1,9 +1,5 @@
-package schema
-
-import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
-
 import io.circe.Json
+import scala.reflect.macros.blackbox
 
 object JsonSchema {
 
