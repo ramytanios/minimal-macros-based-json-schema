@@ -15,11 +15,10 @@ object Main extends App {
   @Title("Employee title")
   case class Employee(
       @Title("Name title") @Description("Name desc") name: String = "ramy",
-      @Title("Age title") @Description("Age desc") age: Int = 28,
-      position: Position = Position.Junior
+      @Title("Age title") @Description("Age desc") age: Int,
+      position: Option[Position]
   )
 
-  
   println(JsonSchema.schema[Employee])
 
 }
