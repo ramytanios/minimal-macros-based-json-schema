@@ -7,9 +7,7 @@ object annotations {
   case class Description(text: String) extends StaticAnnotation
 
   object Description {
-
-    implicit val repr: Repr[Description] = Repr.factory(() => ("description", text))
-
+    implicit val repr: Repr[Description] = Repr.factory(d => List(("description", d.text)))
   }
 
 }

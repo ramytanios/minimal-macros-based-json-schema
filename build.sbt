@@ -7,7 +7,7 @@ lazy val circeDeps = Seq(
   "io.circe" %% "circe-parser" % circeVersion
 )
 
-lazy val XfatalWarnings = (scalacOptions -= "-Xfatal-warnings")
+lazy val XfatalWarnings = ()
 
 lazy val root =
   (project in file(".")).aggregate(annotations.jvm, schema, demo)
@@ -16,7 +16,7 @@ lazy val annotations = crossProject(JVMPlatform, JSPlatform)
   .in(file("annotations"))
   .settings(
     name := "schema-lib-annotations",
-    XfatalWarnings
+    scalacOptions -= "-Xfatal-warnings"
   )
 
 lazy val schema = project
@@ -24,13 +24,13 @@ lazy val schema = project
   .settings(
     name := "schema-lib",
     libraryDependencies ++= circeDeps,
-    XfatalWarnings
+    scalacOptions -= "-Xfatal-warnings"
   )
   .dependsOn(annotations.jvm)
 
 lazy val demo = project
   .in(file("demo"))
   .settings(
-    XfatalWarnings
+    scalacOptions -= "-Xfatal-warnings"
   )
   .dependsOn(schema)
