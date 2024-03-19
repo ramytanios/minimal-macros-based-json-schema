@@ -1,4 +1,4 @@
-package schema.demo
+package schema.examples
 
 import schema.annotations._
 import schema.JsonSchema

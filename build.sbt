@@ -10,7 +10,7 @@ lazy val V = new {
 lazy val circeVersion = "0.14.6"
 
 lazy val root =
-  (project in file(".")).aggregate(annotations.jvm, schema, demo)
+  (project in file(".")).aggregate(annotations.jvm, schema, examples)
 
 lazy val annotations = crossProject(JVMPlatform, JSPlatform)
   .in(file("annotations"))
@@ -36,8 +36,8 @@ lazy val schema = project
   )
   .dependsOn(annotations.jvm)
 
-lazy val demo = project
-  .in(file("demo"))
+lazy val examples = project
+  .in(file("examples"))
   .settings(
     scalacOptions -= "-Xfatal-warnings"
   )
