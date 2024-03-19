@@ -1,7 +1,7 @@
 package schema.examples
 
+import schema.SchemaMacro
 import schema.annotations._
-import schema.JsonSchema
 
 object Main extends App {
 
@@ -20,6 +20,6 @@ object Main extends App {
       position: Option[Position]
   )
 
-  println(JsonSchema.schema[Employee])
+  println(SchemaMacro.schema[Employee])
 
 }
