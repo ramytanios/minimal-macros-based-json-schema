@@ -32,7 +32,8 @@ lazy val schema = project
         "org.scala-lang" % "scala-reflect" % scalaVersion.value
       ),
     scalacOptions -= "-Xfatal-warnings",
-    scalacOptions += "-Ywarn-macros:after"
+    scalacOptions += "-Ywarn-macros:after",
+    scalacOptions += "-Ymacro-annotations"
   )
   .dependsOn(annotations.jvm)
 
