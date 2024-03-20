@@ -20,7 +20,8 @@ object SchemaMacro {
     def jsE = for {
       required <- sf.required(c)(tpe)
       meta <- sf.meta(c)(tpe)(ap)
-    } yield required deepMerge meta
+      props <- sf.properties(c)(tpe)(ap)
+    } yield required.deepMerge(meta).deepMerge(props)
 
     if (!weakTypeOf[T].typeSymbol.asClass.isCaseClass)
       c.abort(
