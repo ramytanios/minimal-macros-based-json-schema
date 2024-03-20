@@ -59,7 +59,7 @@ trait SchemaFactory {
       else if (t.typeSymbol.asClass.isCaseClass) List("type" -> "object").asRight
       else if (t.typeArgs.size == 1 && t <:< tpeSeq) List("type" -> "array").asRight
       else if (t.typeArgs.size == 1 && t <:< tpeOption) tpeHelper(t.typeArgs.head)
-      else s"Invalid type $t".asLeft
+      else s"Unsupported type $t".asLeft
 
     for {
       fromTpe0 <- tpeHelper(tpe)

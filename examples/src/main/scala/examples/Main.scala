@@ -17,7 +17,7 @@ object Main extends App {
   case class Employee(
       @Title("Name title") @Description("Name desc") name: String = "ramy",
       @Title("Age title") @Description("Age desc") age: Int,
-      // position: Option[Position]
+      position: Option[Position]
   )
 
   println(SchemaMacro.schema[Employee])
