@@ -1,7 +1,7 @@
 package schema
 
 import io.circe.Json
-
+import schema.syntax._
 import scala.reflect.macros.blackbox
 
 object SchemaMacro {
@@ -21,9 +21,9 @@ object SchemaMacro {
       required <- sf.required(c)(tpe)
       meta <- sf.meta(c)(tpe)(ap)
       props <- sf.properties(c)(tpe)(ap)
-    } yield required.deepMerge(meta).deepMerge(props)
+    } yield required :+: meta :+: props
 
-    if (!weakTypeOf[T].typeSymbol.asClass.isCaseClass)
+    if (!tpe.typeSymbol.asClass.isCaseClass)
       c.abort(
         c.enclosingPosition,
         s"Unsupported type `${weakTypeOf[T].typeSymbol.fullName}`. Only supports case class"

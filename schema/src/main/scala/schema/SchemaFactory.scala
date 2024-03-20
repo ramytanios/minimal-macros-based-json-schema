@@ -3,6 +3,7 @@ package schema
 import cats.syntax.all._
 import io.circe.Json
 import io.circe.syntax._
+import schema.syntax._
 
 trait SchemaFactory {
 
@@ -31,24 +32,25 @@ trait SchemaFactory {
       .sequence
       .map(_.flatMap(_.repr))
       .map(_.map { case (a, b) => Json.obj(a -> b.asJson) })
-      .map(_.reduce((ljs, rjs) => ljs.deepMerge(rjs)))
+      .map(_.reduce(_ :+: _))
       .leftMap(s => s"Failed to get JSON schema meta: $s")
 
   private def paramJs(c: Context)(ps: c.Symbol)(ap: AnnotationParser): Either[String, Json] = {
+    import c.universe._
 
     val tpe = ps.typeSignature
     val name = ps.fullName
     val annotations = ps.annotations
 
-    val tpeString = c.typeOf[String]
-    val tpeDouble = c.typeOf[Double]
-    val tpeOption = c.typeOf[Option[_]]
-    val tpeSeq = c.typeOf[Seq[_]]
-    val tpeJavaLocalDate = c.typeOf[java.time.LocalDate]
-    val tpeJavaInstant = c.typeOf[java.time.Instant]
-    val tpeBoolean = c.typeOf[Boolean]
+    val tpeString = typeOf[String]
+    val tpeDouble = typeOf[Double]
+    val tpeOption = typeOf[Option[_]]
+    val tpeSeq = typeOf[Seq[_]]
+    val tpeJavaLocalDate = typeOf[java.time.LocalDate]
+    val tpeJavaInstant = typeOf[java.time.Instant]
+    val tpeBoolean = typeOf[Boolean]
 
-    def tpeHelper(t: c.Type): Either[String, List[(String, String)]] =
+    def tpeHelper(t: Type): Either[String, List[(String, String)]] =
       if (t =:= tpeString) List("type" -> "string").asRight
       else if (t =:= tpeJavaLocalDate) List("type" -> "string", "format" -> "date").asRight
       else if (t =:= tpeJavaInstant) List("type" -> "string", "format" -> "date-time").asRight
@@ -63,20 +65,20 @@ trait SchemaFactory {
       fromTpe0 <- tpeHelper(tpe)
       fromTpe = fromTpe0
         .map { case (n, v) => Json.obj(n -> v.asJson) }
-        .reduce((l, r) => l.deepMerge(r))
+        .reduce(_ :+: _)
       fromAnnotation <- annotations
         .map(a => ap.parse(c)(a.tree.tpe.typeSymbol, a.tree.children.tail))
         .sequence // code duplication: improve
         .map(_.flatMap(_.repr))
         .map(_.map { case (a, b) => Json.obj(a -> b.asJson) })
-        .map(_.reduce((ljs, rjs) => ljs.deepMerge(rjs)))
-    } yield Json.obj(sanitizeParamName(name).get -> fromTpe.deepMerge(fromAnnotation))
+        .map(_.reduce(_ :+: _))
+    } yield Json.obj(sanitizeParamName(name).get -> (fromTpe :+: fromAnnotation))
   }
 
   def properties(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.flatten
       .map(paramSymbol => paramJs(c)(paramSymbol)(ap))
       .sequence
-      .map(_.reduce((a, b) => a.deepMerge(b)))
+      .map(_.reduce(_ :+: _))
       .map(js => Json.obj("properties" -> js))
 }
