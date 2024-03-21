@@ -27,12 +27,20 @@ trait SchemaFactory {
       .toEither("Unable to get required fields")
   }
 
-  def meta(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
-    t.typeSymbol.annotations
+  private[this] def jsFromSymbolAnnotations(c: Context)(
+      s: c.Symbol
+  )(ap: AnnotationParser): Either[String, Json] =
+    s.annotations
       .map(a => ap.parse(c)(a.tree.tpe.typeSymbol, a.tree.children.tail))
-      .sequence
-      .map(_.map(_.toJs).reduce(_ :+: _))
-      .leftMap(s => s"Failed to get JSON schema meta: $s")
+      .sequence match {
+      case Nil => JsonObject.empty.asJson.asRight
+      case all => all.map(_.map(_.toJs).reduce(_ :+: _))
+    }
+
+  def meta(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
+    jsFromSymbolAnnotations(c)(t.typeSymbol)(ap).leftMap(s =>
+      s"Failed to get JSON schema meta: $s"
+    )
 
   private[this] def paramJs(
       c: Context
@@ -41,7 +49,6 @@ trait SchemaFactory {
 
     val tpe = ps.typeSignature
     val name = ps.fullName
-    val annotations = ps.annotations
 
     val tpeString = typeOf[String]
     val tpeDouble = typeOf[Double]
@@ -77,18 +84,8 @@ trait SchemaFactory {
       else s"Unsupported type $t".asLeft
 
     for {
-      fromTpe0 <- tpeHelper(tpe)
-      jsFromTpe = fromTpe0
-        .map { case (n, v) => Json.obj(n -> v) }
-        .reduce(_ :+: _)
-      jsFromAnnotations <- annotations match {
-        case Nil => JsonObject.empty.asJson.asRight[String]
-        case all =>
-          all
-            .map(a => ap.parse(c)(a.tree.tpe.typeSymbol, a.tree.children.tail))
-            .sequence
-            .map(_.map(_.toJs).reduce(_ :+: _))
-      }
+      jsFromTpe <- tpeHelper(tpe).map(_.map { case (n, v) => Json.obj(n -> v) }.reduce(_ :+: _))
+      jsFromAnnotations <- jsFromSymbolAnnotations(c)(ps)(ap)
       paramName <- sanitizeParamName(name).toEither(s"Unable to parse param name $name")
     } yield Json.obj(paramName -> (jsFromTpe :+: jsFromAnnotations))
   }

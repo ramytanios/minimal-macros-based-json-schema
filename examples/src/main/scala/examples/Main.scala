@@ -12,8 +12,8 @@ object Main extends App {
     case object Senior extends Position
   }
 
-  @Title("Employee title")
-  @Description("Employee description")
+  // @Title("Employee title")
+  // @Description("Employee description")
   case class Employee(
       @Title("Name") @Description("Name of employee") name: String = "ramy",
       @Title("Age") @Description("Age of employee") age: Int,
