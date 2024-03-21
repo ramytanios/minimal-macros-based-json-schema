@@ -3,7 +3,6 @@ package schema
 import cats.syntax.all._
 import schema.annotations.CustomAnnotation
 
-// inspired by typelevel Literally
 trait AnnotationParser {
 
   type Context = scala.reflect.macros.blackbox.Context
