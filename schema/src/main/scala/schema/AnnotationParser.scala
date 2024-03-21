@@ -43,12 +43,14 @@ trait AnnotationParser {
         .map { case (klass, idx) => parseAnnParam(klass, annParams(idx)) }
         .toList
         .sequence
+        .leftMap(err => s"Failed to parse annotation params: $err")
       newInstance <- Either
         .catchNonFatal(constructor.newInstance(ctorParams: _*))
-        .leftMap(_.getMessage)
+        .leftMap(err => s"Failed to get new instance of annotation: $err")
       customAnn <- Either
         .catchNonFatal(newInstance.asInstanceOf[CustomAnnotation])
         .leftMap(_.getMessage)
+        .leftMap(err => s"Failed to cast annotation to `CustomAnnotation`: $err")
     } yield customAnn
 
   }
