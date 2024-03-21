@@ -2,6 +2,7 @@ package schema
 
 import io.circe.Json
 import schema.syntax._
+
 import scala.reflect.macros.blackbox
 
 object SchemaMacro {
@@ -15,13 +16,13 @@ object SchemaMacro {
     val tpe = weakTypeOf[T]
 
     val ap = new AnnotationParser {}
-    val sf = new SchemaFactory {}
+    val sf = new SchemaFactory[c.type](c, ap)
 
     def jsE: Either[String, Json] = for {
-      required <- sf.required(c)(tpe)
-      meta <- sf.meta(c)(tpe)(ap)
-      props <- sf.properties(c)(tpe)(ap)
-    } yield required :+: meta :+: props
+      reqJs <- sf.required(tpe)
+      metaJs <- sf.meta(tpe)
+      propsJs <- sf.properties(tpe)
+    } yield reqJs :+: metaJs :+: propsJs
 
     if (!tpe.typeSymbol.asClass.isCaseClass)
       c.abort(

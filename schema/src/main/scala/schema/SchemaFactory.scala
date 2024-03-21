@@ -2,51 +2,29 @@ package schema
 
 import cats.syntax.all._
 import io.circe.Json
+import io.circe.JsonObject
 import io.circe.syntax._
 import schema.syntax._
-import io.circe.JsonObject
 
-trait SchemaFactory {
+import scala.reflect.macros.blackbox.Context
 
-  type Context = scala.reflect.macros.blackbox.Context
+// See: https://users.scala-lang.org/t/how-to-use-data-structures-referencing-context-in-macros/3174
+class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
 
-  private[this] def sanitizeParamName(name: String): Option[String] =
-    name.split('.').lastOption
+  import c.universe._
 
-  def required(c: Context)(t: c.Type): Either[String, Json] = {
-    import c.universe._
+  private[this] def sanitizeParamName(name: String): Either[String, String] =
+    name.split('.').lastOption.toEither(s"Unable to sanitize param name $name")
 
-    t.members
-      .filterNot(_.isMethod)
-      .map(s => (s.fullName, s.typeSignature))
-      .filterNot { case (_, t) => t <:< typeOf[Option[_]] }
-      .map { case (n, _) => sanitizeParamName(n) }
-      .toList
-      .sequence
-      .map(required => Json.obj("required" -> required.asJson))
-      .toEither("Unable to get required fields")
-  }
-
-  private[this] def jsFromSymbolAnnotations(c: Context)(
-      s: c.Symbol
-  )(ap: AnnotationParser): Either[String, Json] =
+  private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, Json] =
     s.annotations
-      .map(a => ap.parse(c)(a.tree.tpe.typeSymbol, a.tree.children.tail))
+      .map(ap.parse(c)(_))
       .sequence match {
       case Nil => JsonObject.empty.asJson.asRight
       case all => all.map(_.map(_.toJs).reduce(_ :+: _))
     }
 
-  def meta(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
-    jsFromSymbolAnnotations(c)(t.typeSymbol)(ap).leftMap(s =>
-      s"Failed to get JSON schema meta: $s"
-    )
-
-  private[this] def paramJs(
-      c: Context
-  )(ps: c.Symbol)(ap: AnnotationParser): Either[String, Json] = {
-    import c.universe._
-
+  private[this] def paramJs(ps: c.Symbol): Either[String, Json] = {
     val tpe = ps.typeSignature
     val name = ps.fullName
 
@@ -76,24 +54,41 @@ trait SchemaFactory {
       else if (t.typeArgs.size == 1 && t <:< tpeOption)
         tpeHelper(t.typeArgs.head)
       else if (t.typeSymbol.asClass.isTrait && t.typeSymbol.asClass.isSealed)
-        List(
-          "enum" -> t.typeSymbol.asClass.knownDirectSubclasses
-            .map(s => sanitizeParamName(s.fullName).get)
-            .asJson
-        ).asRight
+        t.typeSymbol.asClass.knownDirectSubclasses.toList
+          .map(s => sanitizeParamName(s.fullName))
+          .sequence
+          .map(_.asJson)
+          .map(js => List("enum" -> js))
       else s"Unsupported type $t".asLeft
 
     for {
-      jsFromTpe <- tpeHelper(tpe).map(_.map { case (n, v) => Json.obj(n -> v) }.reduce(_ :+: _))
-      jsFromAnnotations <- jsFromSymbolAnnotations(c)(ps)(ap)
-      paramName <- sanitizeParamName(name).toEither(s"Unable to parse param name $name")
+      jsFromTpe <- tpeHelper(tpe).map(_.map(Json.obj(_)).reduce(_ :+: _))
+      jsFromAnnotations <- jsFromSymbolAnnotations(ps)
+      paramName <- sanitizeParamName(name)
     } yield Json.obj(paramName -> (jsFromTpe :+: jsFromAnnotations))
+
   }
 
-  def properties(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
+  def meta(t: c.Type): Either[String, Json] =
+    jsFromSymbolAnnotations(t.typeSymbol)
+      .leftMap(err => s"Failed to get Jschema meta: $err")
+
+  def required(t: c.Type): Either[String, Json] =
+    t.members
+      .filterNot(_.isMethod)
+      .map(s => (s.fullName, s.typeSignature))
+      .filterNot { case (_, t) => t <:< typeOf[Option[_]] }
+      .map { case (n, _) => sanitizeParamName(n) }
+      .toList
+      .sequence
+      .map(required => Json.obj("required" -> required.asJson))
+      .leftMap(err => s"Failed to get the `required` section: $err")
+
+  def properties(t: c.Type): Either[String, Json] =
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.flatten
-      .map(paramJs(c)(_)(ap))
+      .map(paramJs)
       .sequence
       .map(_.reduce(_ :+: _))
       .map(js => Json.obj("properties" -> js))
+      .leftMap(err => s"Failed to get the `properties` section: $err")
 }

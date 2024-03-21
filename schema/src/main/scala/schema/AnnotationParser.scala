@@ -7,11 +7,11 @@ trait AnnotationParser {
 
   type Context = scala.reflect.macros.blackbox.Context
 
-  def parse(c: Context)(
-      annSymbol: c.Symbol,
-      annParams: List[c.Tree]
-  ): Either[String, CustomAnnotation] = {
+  def parse(c: Context)(a: c.universe.Annotation): Either[String, CustomAnnotation] = {
     import c.universe._
+
+    val annSymbol = a.tree.tpe.typeSymbol
+    val annParams = a.tree.children.tail
 
     val annClass = Class.forName(annSymbol.asClass.fullName)
     val constructor = annClass.getConstructors()(0)
