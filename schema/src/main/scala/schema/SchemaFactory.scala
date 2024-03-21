@@ -24,7 +24,7 @@ trait SchemaFactory {
       .toList
       .sequence
       .map(required => Json.obj("required" -> required.asJson))
-      .fold("Unable to get required fields".asLeft[Json])(_.asRight[String])
+      .toEither("Unable to get required fields")
   }
 
   def meta(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
@@ -58,7 +58,7 @@ trait SchemaFactory {
         List("type" -> "string".asJson, "format" -> "date".asJson).asRight
       else if (t =:= tpeJavaInstant)
         List("type" -> "string".asJson, "format" -> "date-time".asJson).asRight
-      else if (t weak_<:< tpeDouble)
+      else if (t.weak_<:<(tpeDouble))
         List("type" -> "number".asJson).asRight
       else if (t =:= tpeBoolean)
         List("type" -> "boolean".asJson).asRight
@@ -78,10 +78,10 @@ trait SchemaFactory {
 
     for {
       fromTpe0 <- tpeHelper(tpe)
-      fromTpe = fromTpe0
+      jsFromTpe = fromTpe0
         .map { case (n, v) => Json.obj(n -> v) }
         .reduce(_ :+: _)
-      fromAnnotation <- annotations match {
+      jsFromAnnotations <- annotations match {
         case Nil => JsonObject.empty.asJson.asRight[String]
         case all =>
           all
@@ -89,12 +89,13 @@ trait SchemaFactory {
             .sequence
             .map(_.map(_.toJs).reduce(_ :+: _))
       }
-    } yield Json.obj(sanitizeParamName(name).get -> (fromTpe :+: fromAnnotation))
+      paramName <- sanitizeParamName(name).toEither(s"Unable to parse param name $name")
+    } yield Json.obj(paramName -> (jsFromTpe :+: jsFromAnnotations))
   }
 
   def properties(c: Context)(t: c.Type)(ap: AnnotationParser): Either[String, Json] =
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.flatten
-      .map(paramSymbol => paramJs(c)(paramSymbol)(ap))
+      .map(paramJs(c)(_)(ap))
       .sequence
       .map(_.reduce(_ :+: _))
       .map(js => Json.obj("properties" -> js))

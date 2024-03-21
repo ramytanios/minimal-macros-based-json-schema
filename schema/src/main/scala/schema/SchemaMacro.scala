@@ -12,12 +12,12 @@ object SchemaMacro {
 
     import c.universe._
 
+    val tpe = weakTypeOf[T]
+
     val ap = new AnnotationParser {}
     val sf = new SchemaFactory {}
 
-    val tpe = weakTypeOf[T]
-
-    def jsE = for {
+    def jsE: Either[String, Json] = for {
       required <- sf.required(c)(tpe)
       meta <- sf.meta(c)(tpe)(ap)
       props <- sf.properties(c)(tpe)(ap)
