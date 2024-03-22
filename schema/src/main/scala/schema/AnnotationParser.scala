@@ -2,14 +2,14 @@ package schema
 
 import cats.syntax.all._
 import schema.annotations.CustomAnnotation
+import scala.reflect.macros.blackbox.Context
 
-trait AnnotationParser {
-
-  type Context = scala.reflect.macros.blackbox.Context
-
-  def parse(c: Context)(a: c.universe.Annotation): Either[String, CustomAnnotation] = {
-    import c.universe._
-
+class AnnotationParser[C <: Context](c: C) {
+  
+  import c.universe._
+  
+  def parse(a: c.universe.Annotation): Either[String, CustomAnnotation] = {
+    
     val annSymbol = a.tree.tpe.typeSymbol
     val annParams = a.tree.children.tail
 
