@@ -1,8 +1,8 @@
 package schema
 
-import io.circe.Json
-
 import scala.reflect.macros.blackbox
+import io.circe.syntax._
+import io.circe.Json
 
 object SchemaMacro {
 
@@ -25,7 +25,8 @@ object SchemaMacro {
     else
       sf.schema(tpe) match {
         case Left(err) => c.abort(c.enclosingPosition, s"Failed to generate JSON schema: $err")
-        case Right(js) => c.Expr[Json](q"io.circe.parser.parse(${js.toString()}).toOption.get")
+        case Right(js) =>
+          c.Expr[Json](q"io.circe.parser.parse(${js.asJson.toString()}).toOption.get")
       }
 
   }

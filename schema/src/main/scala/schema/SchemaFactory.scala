@@ -1,7 +1,6 @@
 package schema
 
 import cats.syntax.all._
-import io.circe.Json
 import io.circe.JsonObject
 import io.circe.syntax._
 import schema.syntax._
@@ -16,13 +15,13 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
   private[this] def sanitizeParamName(name: String): Either[String, String] =
     name.split('.').lastOption.toEither(s"Unable to sanitize param name $name")
 
-  private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, Json] =
+  private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, JsonObject] =
     s.annotations match {
-      case Nil => JsonObject.empty.asJson.asRight[String]
+      case Nil => JsonObject.empty.asRight[String]
       case all => all.map(ap.parse(c)(_).map(_.toJs)).sequence.map(_.reduce(_ :+: _))
     }
 
-  private[this] def paramJs(ps: c.Symbol): Either[String, Json] = {
+  private[this] def paramJs(ps: c.Symbol): Either[String, JsonObject] = {
     val tpe = ps.typeSignature
     val name = ps.fullName
 
@@ -34,23 +33,21 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
     val tpeJavaInstant = typeOf[java.time.Instant]
     val tpeBoolean = typeOf[Boolean]
 
-    def tpeHelper(t: Type): Either[String, List[(String, Json)]] =
+    def tpeHelper(t: Type): Either[String, JsonObject] =
       if (t =:= tpeString)
-        List("type" -> "string".asJson).asRight
+        JsonObject("type" -> "string".asJson).asRight
       else if (t =:= tpeJavaLocalDate)
-        List("type" -> "string".asJson, "format" -> "date".asJson).asRight
+        JsonObject("type" -> "string".asJson, "format" -> "date".asJson).asRight
       else if (t =:= tpeJavaInstant)
-        List("type" -> "string".asJson, "format" -> "date-time".asJson).asRight
+        JsonObject("type" -> "string".asJson, "format" -> "date-time".asJson).asRight
       else if (t.weak_<:<(tpeDouble))
-        List("type" -> "number".asJson).asRight
+        JsonObject("type" -> "number".asJson).asRight
       else if (t =:= tpeBoolean)
-        List("type" -> "boolean".asJson).asRight
+        JsonObject("type" -> "boolean".asJson).asRight
       else if (t.typeSymbol.asClass.isCaseClass)
-        schema(t).flatMap(js =>
-          sanitizeParamName(t.typeSymbol.fullName).map(name => List(name -> js))
-        )
+        schema(t)
       else if (t.typeArgs.size == 1 && t <:< tpeSeq)
-        List("type" -> "array".asJson).asRight
+        JsonObject("type" -> "array".asJson).asRight
       else if (t.typeArgs.size == 1 && t <:< tpeOption)
         tpeHelper(t.typeArgs.head)
       else if (t.typeSymbol.asClass.isTrait && t.typeSymbol.asClass.isSealed)
@@ -58,23 +55,23 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
           .map(s => sanitizeParamName(s.fullName))
           .sequence
           .map(_.asJson)
-          .map(js => List("enum" -> js))
+          .map(js => JsonObject("enum" -> js))
       else s"Unsupported type $t".asLeft
 
     for {
-      jsFromTpe <- tpeHelper(tpe).map(_.map(Json.obj(_)).reduce(_ :+: _))
+      jsFromTpe <- tpeHelper(tpe)
       jsFromAnnotations <- jsFromSymbolAnnotations(ps)
       paramName <- sanitizeParamName(name)
-    } yield Json.obj(paramName -> (jsFromTpe :+: jsFromAnnotations))
+    } yield JsonObject(paramName -> (jsFromTpe :+: jsFromAnnotations).asJson)
 
   }
 
-  def meta(t: c.Type): Either[String, Json] =
+  def meta(t: c.Type): Either[String, JsonObject] =
     jsFromSymbolAnnotations(t.typeSymbol)
-      .map(_ :+: Json.obj("type" -> "object".asJson))
+      .map(_ :+: JsonObject("type" -> "object".asJson))
       .leftMap(err => s"Failed to get Jschema meta: $err")
 
-  def required(t: c.Type): Either[String, Json] =
+  def required(t: c.Type): Either[String, JsonObject] =
     t.members
       .filterNot(_.isMethod)
       .map(s => (s.fullName, s.typeSignature))
@@ -82,18 +79,18 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
       .map { case (n, _) => sanitizeParamName(n) }
       .toList
       .sequence
-      .map(required => Json.obj("required" -> required.asJson))
+      .map(required => JsonObject("required" -> required.asJson))
       .leftMap(err => s"Failed to get the `required` section: $err")
 
-  def properties(t: c.Type): Either[String, Json] =
+  def properties(t: c.Type): Either[String, JsonObject] =
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.flatten
       .map(paramJs)
       .sequence
       .map(_.reduce(_ :+: _))
-      .map(js => Json.obj("properties" -> js))
+      .map(js => JsonObject("properties" -> js.asJson))
       .leftMap(err => s"Failed to get the `properties` section: $err")
 
-  def schema(t: c.Type): Either[String, Json] =
+  def schema(t: c.Type): Either[String, JsonObject] =
     for {
       reqJs <- required(t)
       metaJs <- meta(t)
