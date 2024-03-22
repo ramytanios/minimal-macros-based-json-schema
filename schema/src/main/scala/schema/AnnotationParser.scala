@@ -4,11 +4,11 @@ import cats.syntax.all._
 import schema.annotations.CustomAnnotation
 import scala.reflect.macros.blackbox.Context
 
-class AnnotationParser[C <: Context](c: C) {
+class AnnotationParser() {
   
-  import c.universe._
-  
-  def parse(a: c.universe.Annotation): Either[String, CustomAnnotation] = {
+  def parse(c: Context)(a: c.universe.Annotation): Either[String, CustomAnnotation] = {
+    
+    import c.universe._
     
     val annSymbol = a.tree.tpe.typeSymbol
     val annParams = a.tree.children.tail

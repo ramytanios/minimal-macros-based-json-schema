@@ -17,11 +17,9 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
     name.split('.').lastOption.toEither(s"Unable to sanitize param name $name")
 
   private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, Json] =
-    s.annotations
-      .map(ap.parse)
-      .sequence match {
-      case Nil => JsonObject.empty.asJson.asRight
-      case all => all.map(_.map(_.toJs).reduce(_ :+: _))
+    s.annotations match {
+      case Nil => JsonObject.empty.asJson.asRight[String]
+      case all => all.map(ap.parse(c)(_).map(_.toJs)).sequence.map(_.reduce(_ :+: _))
     }
 
   private[this] def paramJs(ps: c.Symbol): Either[String, Json] = {
@@ -48,7 +46,9 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
       else if (t =:= tpeBoolean)
         List("type" -> "boolean".asJson).asRight
       else if (t.typeSymbol.asClass.isCaseClass)
-        List("type" -> "object".asJson).asRight
+        schema(t).flatMap(js =>
+          sanitizeParamName(t.typeSymbol.fullName).map(name => List(name -> js))
+        )
       else if (t.typeArgs.size == 1 && t <:< tpeSeq)
         List("type" -> "array".asJson).asRight
       else if (t.typeArgs.size == 1 && t <:< tpeOption)
@@ -71,6 +71,7 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
 
   def meta(t: c.Type): Either[String, Json] =
     jsFromSymbolAnnotations(t.typeSymbol)
+      .map(_ :+: Json.obj("type" -> "object".asJson))
       .leftMap(err => s"Failed to get Jschema meta: $err")
 
   def required(t: c.Type): Either[String, Json] =
@@ -91,4 +92,12 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
       .map(_.reduce(_ :+: _))
       .map(js => Json.obj("properties" -> js))
       .leftMap(err => s"Failed to get the `properties` section: $err")
+
+  def schema(t: c.Type): Either[String, Json] =
+    for {
+      reqJs <- required(t)
+      metaJs <- meta(t)
+      propsJs <- properties(t)
+    } yield reqJs :+: metaJs :+: propsJs
+
 }
