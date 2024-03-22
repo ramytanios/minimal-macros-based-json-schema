@@ -18,7 +18,8 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
   private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, JsonObject] =
     s.annotations match {
       case Nil => JsonObject.empty.asRight[String]
-      case all => all.map(ap.parse(c)(_).map(_.toJs)).sequence.map(_.reduce(_ :+: _))
+      case annotations =>
+        annotations.map(ap.parse(c)(_).map(_.toJs)).sequence.map(_.reduce(_ :+: _))
     }
 
   private[this] def paramJs(ps: c.Symbol): Either[String, JsonObject] = {
@@ -32,10 +33,13 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
     val tpeJavaLocalDate = typeOf[java.time.LocalDate]
     val tpeJavaInstant = typeOf[java.time.Instant]
     val tpeBoolean = typeOf[Boolean]
+    val tpeUUID = typeOf[java.util.UUID]
 
     def tpeHelper(t: Type): Either[String, JsonObject] =
       if (t =:= tpeString)
         JsonObject("type" -> "string".asJson).asRight
+      else if (t =:= tpeUUID)
+        JsonObject("type" -> "string".asJson, "format" -> "uuid".asJson).asRight
       else if (t =:= tpeJavaLocalDate)
         JsonObject("type" -> "string".asJson, "format" -> "date".asJson).asRight
       else if (t =:= tpeJavaInstant)
@@ -44,18 +48,19 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
         JsonObject("type" -> "number".asJson).asRight
       else if (t =:= tpeBoolean)
         JsonObject("type" -> "boolean".asJson).asRight
-      else if (t.typeSymbol.asClass.isCaseClass)
-        schema(t)
       else if (t.typeArgs.size == 1 && t <:< tpeSeq)
         JsonObject("type" -> "array".asJson).asRight
       else if (t.typeArgs.size == 1 && t <:< tpeOption)
-        tpeHelper(t.typeArgs.head)
+        t.typeArgs.headOption
+          .toEither("Failed to get `Option` type arguments")
+          .flatMap(tpeHelper)
       else if (t.typeSymbol.asClass.isTrait && t.typeSymbol.asClass.isSealed)
         t.typeSymbol.asClass.knownDirectSubclasses.toList
           .map(s => sanitizeParamName(s.fullName))
           .sequence
-          .map(_.asJson)
-          .map(js => JsonObject("enum" -> js))
+          .map(js => JsonObject("enum" -> js.asJson))
+      else if (t.typeSymbol.asClass.isCaseClass)
+        schema(t)
       else s"Unsupported type $t".asLeft
 
     for {

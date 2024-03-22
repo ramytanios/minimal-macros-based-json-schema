@@ -14,4 +14,12 @@ package annotations {
     override def repr: List[(String, String)] = List(("maxLength", ub.toString))
   }
 
+  case class Email() extends CustomAnnotation {
+    override def repr: List[(String, String)] = List(("format", "email"))
+  }
+
+  case class Hostname() extends CustomAnnotation {
+    override def repr: List[(String, String)] = List(("format", "hostname"))
+  }
+
 }

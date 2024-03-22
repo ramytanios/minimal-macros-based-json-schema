@@ -1,8 +1,8 @@
 package schema
 
+import io.circe.JsonObject
 import io.circe.syntax._
 import schema.annotations.CustomAnnotation
-import io.circe.JsonObject
 
 object syntax {
 

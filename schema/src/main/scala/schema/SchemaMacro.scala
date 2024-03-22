@@ -1,8 +1,9 @@
 package schema
 
-import scala.reflect.macros.blackbox
-import io.circe.syntax._
 import io.circe.Json
+import io.circe.syntax._
+
+import scala.reflect.macros.blackbox
 
 object SchemaMacro {
 
