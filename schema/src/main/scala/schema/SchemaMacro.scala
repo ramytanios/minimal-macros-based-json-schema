@@ -15,7 +15,7 @@ object SchemaMacro {
 
     val tpe = weakTypeOf[T]
 
-    val ap = new AnnotationParser {}
+    val ap = new AnnotationParser[c.type](c)
     val sf = new SchemaFactory[c.type](c, ap)
 
     def jsE: Either[String, Json] = for {
