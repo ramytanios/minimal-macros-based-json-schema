@@ -18,7 +18,7 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
 
   private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, Json] =
     s.annotations
-      .map(ap.parse(c)(_))
+      .map(ap.parse)
       .sequence match {
       case Nil => JsonObject.empty.asJson.asRight
       case all => all.map(_.map(_.toJs).reduce(_ :+: _))
