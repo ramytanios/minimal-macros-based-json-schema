@@ -14,10 +14,6 @@ class AnnotationParser() {
     val annSymbol = a.tree.tpe.typeSymbol
     val annParams = a.tree.children.tail
 
-    val annClass = Class.forName(annSymbol.asClass.fullName)
-    val constructor = annClass.getConstructors()(0)
-    val paramsTypes = constructor.getParameterTypes
-
     def parseAnnParam(klass: Class[_], value: Tree): Either[String, Any] = {
 
       val lVal = value match {
@@ -40,6 +36,21 @@ class AnnotationParser() {
     }
 
     for {
+      annClass <- Either
+        .catchNonFatal(Class.forName(annSymbol.asClass.fullName))
+        .leftMap(_.getMessage)
+      // _ <- .flatTap(_ =>
+      //     c.warning(
+      //       c.enclosingPosition,
+      //       s"Annotation ${annSymbol.asClass.fullName} could not be found"
+      //     ).asRight
+      //   )
+      constructor <- Either
+        .catchNonFatal(annClass.getConstructors()(0))
+        .leftMap(_.getMessage)
+      paramsTypes <- Either
+        .catchNonFatal(constructor.getParameterTypes)
+        .leftMap(_.getMessage)
       ctorParams <- paramsTypes.zipWithIndex
         .map { case (klass, idx) => parseAnnParam(klass, annParams(idx)) }
         .toList
