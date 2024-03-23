@@ -19,7 +19,12 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
     s.annotations match {
       case Nil => JsonObject.empty.asRight[String]
       case annotations =>
-        annotations.map(ap.parse(c)(_).map(_.toJs)).sequence.map(_.reduce(_ :+: _))
+        annotations
+          .map(ap.parse(c)(_))
+          .collect { case Right(ann) => ann } // skip incompatible annotations
+          .map(_.repr)
+          .reduce(_ :+: _)
+          .asRight
     }
 
   private[this] def paramJs(ps: c.Symbol): Either[String, JsonObject] = {

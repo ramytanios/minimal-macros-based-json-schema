@@ -30,12 +30,14 @@ object Main extends App {
 
   @Title("Employee title")
   @Description("Employee description")
+  @Fishy(2)
   case class Employee(
       @Title("Name")
       @Description("Name of employee")
       name: String = "ramy",
       @Title("Age")
       @Description("Age of employee")
+      @Minimum(0)
       age: Long,
       id: java.util.UUID,
       @Description("Position of employee")

@@ -16,6 +16,7 @@ lazy val annotations = crossProject(JVMPlatform, JSPlatform)
   .in(file("annotations"))
   .settings(
     name := "schema-lib-annotations",
+    libraryDependencies ++= Seq("io.circe" %% "circe-core" % V.circe),
     scalacOptions -= "-Xfatal-warnings"
   )
 

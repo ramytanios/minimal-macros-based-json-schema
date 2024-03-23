@@ -1,25 +1,27 @@
 package schema
 
 package annotations {
+  import io.circe.JsonObject
+  import io.circe.syntax._
 
   case class Regex(regex: String) extends CustomAnnotation {
-    override def repr: List[(String, String)] = List(("pattern", regex.toString))
+    override def repr: JsonObject = JsonObject("pattern" -> regex.asJson)
   }
 
   case class MinLength(lb: Long) extends CustomAnnotation {
-    override def repr: List[(String, String)] = List(("minLength", lb.toString))
+    override def repr: JsonObject = JsonObject("minLength" -> lb.asJson)
   }
 
   case class MaxLength(ub: Long) extends CustomAnnotation {
-    override def repr: List[(String, String)] = List(("maxLength", ub.toString))
+    override def repr: JsonObject = JsonObject("maxLength" -> ub.asJson)
   }
 
   case class Email() extends CustomAnnotation {
-    override def repr: List[(String, String)] = List(("format", "email"))
+    override def repr: JsonObject = JsonObject("format" -> "email".asJson)
   }
 
   case class Hostname() extends CustomAnnotation {
-    override def repr: List[(String, String)] = List(("format", "hostname"))
+    override def repr: JsonObject = JsonObject("format" -> "hostname".asJson)
   }
 
 }
