@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox.Context
 
 class AnnotationParser() {
 
-  def parse(c: Context)(a: c.universe.Annotation): Either[String, CustomAnnotation] = {
+  def parse(c: Context)(a: c.universe.Annotation): Either[String, Option[CustomAnnotation]] = {
 
     import c.universe._
 
@@ -38,13 +38,7 @@ class AnnotationParser() {
     for {
       annClass <- Either
         .catchNonFatal(Class.forName(annSymbol.asClass.fullName))
-        .leftMap(_.getMessage)
-      // _ <- .flatTap(_ =>
-      //     c.warning(
-      //       c.enclosingPosition,
-      //       s"Annotation ${annSymbol.asClass.fullName} could not be found"
-      //     ).asRight
-      //   )
+        .leftMap(err => s"missing class: ${err.getMessage}")
       constructor <- Either
         .catchNonFatal(annClass.getConstructors()(0))
         .leftMap(_.getMessage)
@@ -59,10 +53,11 @@ class AnnotationParser() {
       newInstance <- Either
         .catchNonFatal(constructor.newInstance(ctorParams: _*))
         .leftMap(err => s"Failed to get new instance of annotation: $err")
-      customAnn <- Either
-        .catchNonFatal(newInstance.asInstanceOf[CustomAnnotation])
-        .leftMap(_.getMessage)
-        .leftMap(err => s"Failed to cast annotation to `CustomAnnotation`: $err")
+      customAnn <- (Either
+        .catchNonFatal(newInstance.asInstanceOf[CustomAnnotation]) match {
+          case Left(_) => None 
+          case Right(a) => Some(a)
+        }).asRight
     } yield customAnn
 
   }

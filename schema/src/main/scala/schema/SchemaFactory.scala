@@ -21,10 +21,13 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
       case annotations =>
         annotations
           .map(ap.parse(c))
-          .collect { case Right(ann) => ann } // skip incompatible annotations
-          .map(_.repr)
-          .reduce(_ :+: _)
-          .asRight
+          .collect { // skip all annotations that are not `CustomAnnotation`
+            case Right(Some(a)) => a.asRight
+            case Left(e)        => e.asLeft
+          }
+          .sequence
+          .map(_.map(_.repr))
+          .map(_.reduce(_ :+: _))
     }
 
   private[this] def jsFromParamSymbol(ps: c.Symbol): Either[String, JsonObject] = {
@@ -79,7 +82,7 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
   def meta(t: c.Type): Either[String, JsonObject] =
     jsFromSymbolAnnotations(t.typeSymbol)
       .map(_ :+: JsonObject("type" -> "object".asJson))
-      .leftMap(err => s"Failed to get Jschema meta: $err")
+      .leftMap(err => s"Failed to get schema meta: $err")
 
   def required(t: c.Type): Either[String, JsonObject] =
     t.members
