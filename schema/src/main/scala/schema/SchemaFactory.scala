@@ -20,14 +20,14 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
       case Nil => JsonObject.empty.asRight[String]
       case annotations =>
         annotations
-          .map(ap.parse(c)(_))
+          .map(ap.parse(c))
           .collect { case Right(ann) => ann } // skip incompatible annotations
           .map(_.repr)
           .reduce(_ :+: _)
           .asRight
     }
 
-  private[this] def paramJs(ps: c.Symbol): Either[String, JsonObject] = {
+  private[this] def jsFromParamSymbol(ps: c.Symbol): Either[String, JsonObject] = {
     val tpe = ps.typeSignature
     val name = ps.fullName
 
@@ -94,7 +94,7 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
 
   def properties(t: c.Type): Either[String, JsonObject] =
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.flatten
-      .map(paramJs)
+      .map(jsFromParamSymbol)
       .sequence
       .map(_.reduce(_ :+: _))
       .map(js => JsonObject("properties" -> js.asJson))
