@@ -5,7 +5,6 @@ import schema.annotations._
 import io.circe.JsonObject
 import io.circe.syntax._
 import io.estatico.newtype.macros.newtype
-// import io.estatico.newtype.macros.newtype
 
 object Main extends App {
 
@@ -41,7 +40,7 @@ object Main extends App {
   @Description("Employee description")
   @Fishy(2)
   // @newtype
-  // @NewAnn("bar")
+  @NewAnn("bar")
   case class Employee(
       @Title("Name")
       @Description("Name of employee")
@@ -60,11 +59,11 @@ object Main extends App {
   )
 
   @Title("A foo object")
+  case class Foo(x: Bar)
+
   @newtype
-  case class Foo(x: Int)
+  case class Bar(f: Int)
 
-  case class Bar(f: Foo)
-
-  println(SchemaMacro.schema[Bar])
+  println(SchemaMacro.schema[Foo])
  
 }

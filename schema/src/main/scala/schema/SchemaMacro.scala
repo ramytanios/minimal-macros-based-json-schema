@@ -16,7 +16,9 @@ object SchemaMacro {
     val tpe = weakTypeOf[T]
 
     val ap = new AnnotationParser()
-    val sf = new SchemaFactory[c.type](c, ap)
+    val sf = new SchemaFactory[c.type](c, ap, List("newtype"))
+
+    println(tpe.typeSymbol)
 
     if (!tpe.typeSymbol.asClass.isCaseClass)
       c.abort(

@@ -45,6 +45,7 @@ lazy val schema = project
 lazy val examples = project
   .in(file("examples"))
   .settings(
-    scalacOptions -= "-Xfatal-warnings"
+    scalacOptions -= "-Xfatal-warnings",
+    scalacOptions += "-Ymacro-annotations"
   )
   .dependsOn(schema)

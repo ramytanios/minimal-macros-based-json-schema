@@ -25,4 +25,8 @@ package annotations {
     override def repr: JsonObject = JsonObject("multipleOf" -> mul.asJson)
   }
 
+  case class Between(min: Double, max: Double = 2) extends CustomAnnotation {
+    override def repr: JsonObject = JsonObject("min" -> min.asJson, "max" -> max.asJson)
+  }
+
 }

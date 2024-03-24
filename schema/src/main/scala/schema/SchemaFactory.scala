@@ -6,9 +6,10 @@ import io.circe.syntax._
 import schema.syntax._
 
 import scala.reflect.macros.blackbox.Context
+import schema.annotations.CustomAnnotation
 
 // See: https://users.scala-lang.org/t/how-to-use-data-structures-referencing-context-in-macros/3174
-class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
+class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: List[String]) {
 
   import c.universe._
 
@@ -16,7 +17,10 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
     name.split('.').lastOption.toEither(s"Unable to sanitize param name $name")
 
   private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, JsonObject] =
-    s.annotations match {
+    s.annotations
+      .filterNot(ann =>
+        sanitizeParamName(ann.tree.tpe.typeSymbol.fullName).exists(skipAnnotations.contains)
+      ) match {
       case Nil => JsonObject.empty.asRight[String]
       case annotations =>
         annotations
@@ -62,13 +66,17 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser) {
         t.typeArgs.headOption
           .toEither("Failed to get `Option` type arguments")
           .flatMap(tpeHelper)
-      else if (t.typeSymbol.asClass.isTrait && t.typeSymbol.asClass.isSealed)
+      else if (
+        t.typeSymbol.isClass && t.typeSymbol.asClass.isTrait && t.typeSymbol.asClass.isSealed
+      )
         t.typeSymbol.asClass.knownDirectSubclasses.toList
           .map(s => sanitizeParamName(s.fullName))
           .sequence
           .map(js => JsonObject("enum" -> js.asJson))
       else if (t.typeSymbol.asClass.isCaseClass)
         schema(t)
+      else if (t.typeSymbol.isType)
+        schema(t.typeSymbol.asType.toType) // infinite loop?
       else s"Unsupported type $t".asLeft
 
     for {
