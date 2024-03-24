@@ -18,7 +18,7 @@ class AnnotationParser() {
 
       val lVal = value match {
         case Literal(Constant(lVal)) => lVal.toString.asRight
-        case _                       => "Invalid literal for annotation".asLeft
+        case _ => s"Invalid literal for annotation with klass $klass and tree $value".asLeft
       }
 
       lVal.flatMap(v =>
@@ -28,6 +28,8 @@ class AnnotationParser() {
           v.asRight[String]
         else if (klass == classOf[Int])
           v.toIntOption.fold(s"Invalid `Int` $v".asLeft[Any])(_.asRight)
+        else if (klass == classOf[Long])
+          v.toLongOption.fold(s"Invalid `Long` $v".asLeft[Any])(_.asRight)
         else if (klass == classOf[Boolean])
           v.toBooleanOption.fold(s"Invalid `Boolean` $v".asLeft[Any])(_.asRight)
         else s"Unsupported annotation field value type".asLeft[Any]
@@ -55,9 +57,9 @@ class AnnotationParser() {
         .leftMap(err => s"Failed to get new instance of annotation: $err")
       customAnn <- (Either
         .catchNonFatal(newInstance.asInstanceOf[CustomAnnotation]) match {
-          case Left(_) => None 
-          case Right(a) => Some(a)
-        }).asRight
+        case Left(_)  => None
+        case Right(a) => Some(a)
+      }).asRight
     } yield customAnn
 
   }

@@ -5,6 +5,7 @@ ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports"
 lazy val V = new {
   val circe = "0.14.6"
   val cats = "2.10.0"
+  val newtype = "0.4.4"
 }
 
 lazy val circeVersion = "0.14.6"
@@ -16,7 +17,10 @@ lazy val annotations = crossProject(JVMPlatform, JSPlatform)
   .in(file("annotations"))
   .settings(
     name := "schema-lib-annotations",
-    libraryDependencies ++= Seq("io.circe" %% "circe-core" % V.circe),
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % V.circe,
+      "io.estatico" %% "newtype" % V.newtype
+    ),
     scalacOptions -= "-Xfatal-warnings"
   )
 
