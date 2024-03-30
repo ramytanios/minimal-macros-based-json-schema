@@ -35,7 +35,7 @@ lazy val schema = project
         "io.circe" %% "circe-literal" % V.circe,
         "io.circe" %% "circe-parser" % V.circe,
         "org.typelevel" %% "cats-core" % V.cats,
-        "org.typelevel" %% "mouse" % V.mouse,
+        "org.typelevel" %%% "mouse" % V.mouse,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value
       ),
     scalacOptions -= "-Xfatal-warnings",

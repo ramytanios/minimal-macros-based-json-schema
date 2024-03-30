@@ -40,8 +40,8 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: L
 
     println(ps.annotations)
 
-    def isNewtype(ps: c.Symbol): Boolean = 
-      ps.annotations.contains("NewtypeInt") .....
+    // def isNewtype(ps: c.Symbol): Boolean = 
+      // ps.annotations.contains("NewtypeInt") .....
 
     val tpeString = typeOf[String]
     val tpeDouble = typeOf[Double]

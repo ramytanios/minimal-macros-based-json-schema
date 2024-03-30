@@ -40,7 +40,7 @@ object Main extends App {
   @Description("Employee description")
   @Fishy(2)
   // @newtype
-  @NewAnn("bar")
+  // @NewAnn("bar")
   case class Employee(
       @Title("Name")
       @Description("Name of employee")
@@ -64,6 +64,6 @@ object Main extends App {
   @newtype
   case class Bar(f: Int)
 
-  println(SchemaMacro.schema[Foo])
+  println(SchemaMacro.schema[Employee])
 
 }
