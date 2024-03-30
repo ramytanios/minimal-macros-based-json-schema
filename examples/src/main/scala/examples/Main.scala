@@ -59,11 +59,11 @@ object Main extends App {
   )
 
   @Title("A foo object")
-  case class Foo(x: Bar)
+  case class Foo(@NewtypeInt x: Bar)
 
   @newtype
   case class Bar(f: Int)
 
   println(SchemaMacro.schema[Foo])
- 
+
 }

@@ -6,6 +6,7 @@ lazy val V = new {
   val circe = "0.14.6"
   val cats = "2.10.0"
   val newtype = "0.4.4"
+  val mouse = "1.2.3"
 }
 
 lazy val circeVersion = "0.14.6"
@@ -34,6 +35,7 @@ lazy val schema = project
         "io.circe" %% "circe-literal" % V.circe,
         "io.circe" %% "circe-parser" % V.circe,
         "org.typelevel" %% "cats-core" % V.cats,
+        "org.typelevel" %% "mouse" % V.mouse,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value
       ),
     scalacOptions -= "-Xfatal-warnings",

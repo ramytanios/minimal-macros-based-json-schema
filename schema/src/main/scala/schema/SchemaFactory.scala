@@ -14,7 +14,7 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: L
   import c.universe._
 
   private[this] def sanitizeParamName(name: String): Either[String, String] =
-    name.split('.').lastOption.toEither(s"Unable to sanitize param name $name")
+    name.split('.').lastOption.toRight(s"Unable to sanitize param name $name")
 
   private[this] def jsFromSymbolAnnotations(s: c.Symbol): Either[String, JsonObject] =
     s.annotations
@@ -37,6 +37,11 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: L
   private[this] def jsFromParamSymbol(ps: c.Symbol): Either[String, JsonObject] = {
     val tpe = ps.typeSignature
     val name = ps.fullName
+
+    println(ps.annotations)
+
+    def isNewtype(ps: c.Symbol): Boolean = 
+      ps.annotations.contains("NewtypeInt") .....
 
     val tpeString = typeOf[String]
     val tpeDouble = typeOf[Double]
@@ -64,7 +69,7 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: L
         JsonObject("type" -> "array".asJson).asRight
       else if (t.typeArgs.size == 1 && t <:< tpeOption)
         t.typeArgs.headOption
-          .toEither("Failed to get `Option` type arguments")
+          .toRight("Failed to get `Option` type arguments")
           .flatMap(tpeHelper)
       else if (
         t.typeSymbol.isClass && t.typeSymbol.asClass.isTrait && t.typeSymbol.asClass.isSealed
@@ -75,8 +80,6 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: L
           .map(js => JsonObject("enum" -> js.asJson))
       else if (t.typeSymbol.asClass.isCaseClass)
         schema(t)
-      else if (t.typeSymbol.isType)
-        schema(t.typeSymbol.asType.toType) // infinite loop?
       else s"Unsupported type $t".asLeft
 
     for {
