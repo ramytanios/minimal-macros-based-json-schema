@@ -2,9 +2,6 @@ package schema.examples
 
 import schema.SchemaMacro
 import schema.annotations._
-import io.circe.JsonObject
-import io.circe.syntax._
-import io.estatico.newtype.macros.newtype
 
 object Main extends App {
 
@@ -22,10 +19,6 @@ object Main extends App {
     case object AG extends Location
   }
 
-  case class NewAnn(n: String) extends CustomAnnotation {
-    override def repr: JsonObject = JsonObject("foo" -> n.asJson)
-  }
-
   @Title("Company title")
   @Description("Company description")
   case class Company(
@@ -38,9 +31,6 @@ object Main extends App {
 
   @Title("Employee title")
   @Description("Employee description")
-  @Fishy(2)
-  // @newtype
-  // @NewAnn("bar")
   case class Employee(
       @Title("Name")
       @Description("Name of employee")
@@ -57,12 +47,6 @@ object Main extends App {
       @MultipleOf(10.5)
       salary: Int
   )
-
-  @Title("A foo object")
-  case class Foo(@NewtypeInt x: Bar)
-
-  @newtype
-  case class Bar(f: Int)
 
   println(SchemaMacro.schema[Employee])
 

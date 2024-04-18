@@ -6,7 +6,6 @@ import io.circe.syntax._
 import schema.syntax._
 
 import scala.reflect.macros.blackbox.Context
-import schema.annotations.CustomAnnotation
 
 // See: https://users.scala-lang.org/t/how-to-use-data-structures-referencing-context-in-macros/3174
 class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: List[String]) {
@@ -40,8 +39,8 @@ class SchemaFactory[C <: Context](c: C, ap: AnnotationParser, skipAnnotations: L
 
     println(ps.annotations)
 
-    // def isNewtype(ps: c.Symbol): Boolean = 
-      // ps.annotations.contains("NewtypeInt") .....
+    // def isNewtype(ps: c.Symbol): Boolean =
+    // ps.annotations.contains("NewtypeInt") .....
 
     val tpeString = typeOf[String]
     val tpeDouble = typeOf[Double]
