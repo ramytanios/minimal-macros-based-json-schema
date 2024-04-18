@@ -1,1 +1,1 @@
-TODO
+Compile time JSON schemas playground ..
